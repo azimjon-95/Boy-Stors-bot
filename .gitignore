@@ -1,0 +1,49 @@
+# Node.js modullari va bog'liqliklar
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+package-lock.json
+yarn.lock
+
+# Mahalliy muhit fayllari
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log fayllari
+logs/
+*.log
+*.log.*
+
+# Vaqtinchalik fayllar
+*.tmp
+*.temp
+*.swp
+
+# Tuzilgan (build) fayllar
+/dist
+/build
+/out
+
+# Muammolarni tuzatish va test fayllari
+coverage/
+.nyc_output
+
+# IDE va muharrirlar uchun maxsus fayllar
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Operatsion tizim fayllari
+.DS_Store
+Thumbs.db
+
+# Boshqa
+*.bak
+*.gho
+*.orig
+*.rej
