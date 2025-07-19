@@ -56,61 +56,28 @@ bot.onText(/\/start(?:\?ref=(\d+))?/, async (msg, match) => {
     await bot.sendMessage(referrerId, "🆕 Sizda yangi taklif mavjud!");
   }
 
-  userSteps[chatId] = { step: "waiting_for_phone" };
+  userSteps[chatId] = { step: 'waiting_for_phone' };
   const keyboard = {
-    keyboard: [
-      [{ text: "📞 Telefon raqamni yuborish", request_contact: true }],
-      [{ text: "📝 Qo‘lda raqam kiritish" }],
-    ],
+    keyboard: [[{ text: "📞 Telefon raqamni yuborish", request_contact: true }]],
     resize_keyboard: true,
     one_time_keyboard: true,
   };
 
-  await bot.sendMessage(
-    chatId,
-    "📲 Telefon raqamingizni yuboring (faqat +998 bilan boshlanishi kerak).\n" +
-    "Yoki 'Qo‘lda raqam kiritish' tugmasini bosing va raqamingizni yozing (masalan, +998901234567).",
-    { reply_markup: keyboard }
-  );
+  await bot.sendMessage(chatId, "📲 Telefon raqamingizni yuboring (faqat +998).", { reply_markup: keyboard });
 });
 
-// Handle "Qo‘lda raqam kiritish" button
-bot.onText(/📝 Qo‘lda raqam kiritish/, (msg) => {
+// Handle contact (phone number) submission
+bot.on('contact', async (msg) => {
   const chatId = msg.chat.id;
-  if (userSteps[chatId]?.step !== "waiting_for_phone") return;
+  const userId = msg.contact.user_id;
 
-  userSteps[chatId] = { step: "waiting_for_manual_phone" };
-  return bot.sendMessage(
-    chatId,
-    "📱 Telefon raqamingizni +998 bilan boshlanadigan holda yozing (masalan, +998901234567):",
-    {
-      reply_markup: { keyboard: [["🔙 Ortga"]], resize_keyboard: true },
-    }
-  );
-});
+  if (userSteps[chatId]?.step !== 'waiting_for_phone') return;
 
-// Handle manual phone number input
-bot.onText(/^\+?998\d{9}$/, async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  let phone = msg.text;
-
-  if (userSteps[chatId]?.step !== "waiting_for_manual_phone") return;
-
-  console.log("Manual phone number received:", phone); // Debug: Log manual phone number
-
-  // Normalize phone number
-  phone = phone.replace(/[\s\-\(\)\+]/g, ""); // Remove spaces, dashes, parentheses, and extra + signs
-  if (!phone.startsWith("998")) {
-    console.log("Invalid phone number format after normalization:", phone);
-    return bot.sendMessage(
-      chatId,
-      "❌ Noto‘g‘ri format. Iltimos, +998 bilan boshlanadigan O‘zbekiston raqamini kiriting (masalan, +998901234567)."
-    );
+  const phone = msg.contact.phone_number;
+  if (!phone.startsWith('+998')) {
+    return bot.sendMessage(chatId, "❌ Faqat +998 bilan boshlanuvchi O‘zbekiston raqamlari qabul qilinadi.");
   }
-  phone = "+998" + phone.slice(3); // Ensure +998 prefix
 
-  console.log("Normalized manual phone number:", phone); // Debug: Log normalized phone number
 
   const status = await checkChannelMembership(userId);
   if (!["member", "creator", "administrator"].includes(status)) {
