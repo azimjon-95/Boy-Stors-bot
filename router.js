@@ -115,6 +115,21 @@ router.post("/performTransaction", async (req, res) => {
   try {
     const { id, params } = req.body;
 
+    if (req.method !== "POST") {
+      return res.json({
+        jsonrpc: "2.0",
+        id: null,
+        error: { code: -32300, message: "So‘rov POST metodi orqali kelmagan" },
+      });
+    }
+    if (!params || !params.fields || !params.fields.username) {
+      return res.json({
+        jsonrpc: "2.0",
+        id: id || null,
+        error: { code: -32602, message: "Majburiy parametrlar yo‘q" },
+      });
+    }
+
     let exactUSer = await USER_DB.findOne({ username: params.fields.username });
 
     if (!exactUSer) {
@@ -133,18 +148,31 @@ router.post("/performTransaction", async (req, res) => {
       amount: params.amount,
       type: params.fields.type,
       transactionId: params.transactionId,
+      starsCount: params.fields.starsCount,
+      months: params.fields.months,
     };
 
     let findPayment = await Payment.findOne({
       transactionId: data.transactionId,
     });
 
+    if (!findPayment) {
+      return res.json({
+        jsonrpc: "2.0",
+        id,
+        error: {
+          code: 203,
+          message: "Bunday transaksiya topilmadi",
+        },
+      });
+    }
+
     if (findPayment) {
       return res.json({
         jsonrpc: "2.0",
         id,
         error: {
-          code: 302,
+          code: 201,
           message: "Bunday to‘lov mavjud",
         },
       });
@@ -266,7 +294,7 @@ router.post("/getStatement", async (req, res) => {
           return {
             transactionId: item.transactionId,
             amount: item.amount,
-            providerTrnId: item._id,  
+            providerTrnId: item._id,
             timestamp: dayjs(item.createdAt).format("YYYY-MM-DD HH:mm:ss"),
           };
         }),

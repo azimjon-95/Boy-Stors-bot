@@ -15,6 +15,14 @@ const paymentSchema = new Schema(
       type: String,
       required: true,
     },
+    starsCount: {
+      type: Number,
+      default: null,
+    },
+    months: {
+      type: Number,
+      default: null,
+    },
     transactionId: {
       type: String,
       required: true,
