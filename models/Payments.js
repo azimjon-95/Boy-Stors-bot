@@ -31,6 +31,11 @@ const paymentSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    order_id: {
+      type: String, // e.g., 00001
+      required: true,
+      unique: true,
+    },
   },
   {
     timestamps: true,
