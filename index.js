@@ -20,20 +20,10 @@ const userSteps = {}; // Track user interaction steps
 const userStates = {}; // Track user state
 const referralMap = {}; // Track referral links
 
-// === Initialize Prices ===
-async function initializePrices() {
-  const defaultPrices = [
-    { type: "premium_3_months", value: 175000 },
-    { type: "premium_6_months", value: 240000 },
-    { type: "premium_12_months", value: 405000 },
-    { type: "star_per_unit", value: 240 },
-  ];
-
-  for (const price of defaultPrices) {
-    const exists = await Price.findOne({ type: price.type });
-    if (!exists) await Price.create(price);
-  }
-}
+// === Transaction Id ===
+const generateTransactionId = () => {
+  return `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 // === Generate unique order_id ===
 async function generateOrderId() {
@@ -43,10 +33,31 @@ async function generateOrderId() {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
-    return String(counter.seq).padStart(5, "0");
+    return String(counter.seq).padStart(5, "0"); // Ensures 00001, 00002, etc.
   } catch (error) {
     console.error("Order ID generation error:", error);
-    return String(Date.now()).slice(-5);
+    // Fallback: Generate a random 5-digit ID and ensure uniqueness
+    let tempSeq;
+    let orderId;
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!isUnique && attempts < maxAttempts) {
+      tempSeq = Math.floor(Math.random() * 100000); // Random number up to 99999
+      orderId = String(tempSeq).padStart(5, "0");
+      const existingPayment = await Payment.findOne({ order_id: orderId });
+      if (!existingPayment) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      throw new Error("Failed to generate a unique order_id after multiple attempts");
+    }
+
+    return orderId;
   }
 }
 
@@ -238,7 +249,7 @@ bot.on("contact", async (msg) => {
       );
     }
 
-    const newUser = await User.create({
+    await User.create({
       telegramId: userId,
       phoneNumber: normalizedPhone,
       username: msg.from.username || "",
@@ -607,6 +618,7 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     );
   }
 
+
   if (userStates[chatId]?.step === "waiting_for_star_recipient") {
     let recipient = text.trim();
     if (recipient === "🙋‍♂️ O'zimga") {
@@ -619,6 +631,27 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     delete userStates[chatId];
 
     const orderId = await generateOrderId();
+    const user = await User.findOne({ telegramId: userId });
+
+    // Save to Payment collection
+    try {
+      const payment = await Payment.create({
+        user: user._id,
+        amount: price,
+        type: "star_purchase",
+        starsCount: starAmount,
+        months: null,
+        transactionId: generateTransactionId(),
+        status: true, // Pending confirmation
+        order_id: orderId,
+      });
+
+      console.log(`Payment saved: ${payment._id}`);
+    } catch (error) {
+      console.error("Error saving payment:", error);
+      await bot.sendMessage(chatId, "❌ To'lovni saqlashda xatolik yuz berdi.");
+      return;
+    }
 
     try {
       await bot.sendMessage(
@@ -636,7 +669,7 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
 
     return bot.sendMessage(
       chatId,
-      `✅ Buyurtma tayyor!\n\n⭐ ${starAmount} ta star\nNarxi: ${price} so'm\nKimga: ${recipient}\n🆔 Buyurtma: ${orderId}`,
+      `✅ Buyurtma tayyor!\n\n⭐ ${starAmount} ta star\nNarxi: ${price} so'm\nKimga: ${recipient}\n�ID Buyurtma: ${orderId}`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -719,6 +752,35 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     delete userStates[chatId];
 
     const orderId = await generateOrderId();
+    const user = await User.findOne({ telegramId: userId });
+
+    // Determine months based on selected package
+    const monthsMap = {
+      "3 oy": 3,
+      "6 oy": 6,
+      "1 yil": 12,
+    };
+    const months = monthsMap[selectedPackage] || null;
+
+    // Save to Payment collection
+    try {
+      const payment = await Payment.create({
+        user: user._id,
+        amount: price,
+        type: "premium_purchase",
+        starsCount: null,
+        months: months,
+        transactionId: generateTransactionId(),
+        status: true, // Pending confirmation
+        order_id: orderId,
+      });
+
+      console.log(`Payment saved: ${payment._id}`);
+    } catch (error) {
+      console.error("Error saving payment:", error);
+      await bot.sendMessage(chatId, "❌ To'lovni saqlashda xatolik yuz berdi.");
+      return;
+    }
 
     try {
       await bot.sendMessage(
@@ -736,7 +798,7 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
 
     return bot.sendMessage(
       chatId,
-      `✅ Buyurtma tayyor!\n\nPaket: ${selectedPackage}\nNarxi: ${price} so'm\nKimga: ${recipient}\n🆔 Buyurtma: ${orderId}`,
+      `✅ Buyurtma tayyor!\n\nPaket: ${selectedPackage}\nNarxi: ${price} so'm\nKimga: ${recipient}\n�ID Buyurtma: ${orderId}`,
       {
         reply_markup: {
           inline_keyboard: [

@@ -32,9 +32,10 @@ const paymentSchema = new Schema(
       default: true,
     },
     order_id: {
-      type: String, // e.g., 00001
+      type: String,
       required: true,
       unique: true,
+      match: [/^\d{5}$/, "Order ID must be exactly 5 digits (e.g., 00001)"],
     },
   },
   {
