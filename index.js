@@ -58,26 +58,30 @@ bot.onText(/\/start(?:\?ref=(\d+))?/, async (msg, match) => {
     await bot.sendMessage(referrerId, "🆕 Sizda yangi taklif mavjud!");
   }
 
-  userSteps[chatId] = { step: 'waiting_for_phone' };
+  userSteps[chatId] = { step: "waiting_for_phone" };
   const keyboard = {
-    keyboard: [[{ text: "📞 Telefon raqamni yuborish", request_contact: true }]],
+    keyboard: [
+      [{ text: "📞 Telefon raqamni yuborish", request_contact: true }],
+    ],
     resize_keyboard: true,
     one_time_keyboard: true,
   };
 
-  await bot.sendMessage(chatId, "📲 Telefon raqamingizni yuboring (faqat +998).", { reply_markup: keyboard });
+  await bot.sendMessage(
+    chatId,
+    "📲 Telefon raqamingizni yuboring (faqat +998).",
+    { reply_markup: keyboard }
+  );
 });
 
 // Handle contact (phone number) submission
-bot.on('contact', async (msg) => {
+bot.on("contact", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.contact.user_id;
 
-  if (userSteps[chatId]?.step !== 'waiting_for_phone') return;
+  if (userSteps[chatId]?.step !== "waiting_for_phone") return;
 
   const phone = msg.contact.phone_number;
-
-
 
   const status = await checkChannelMembership(userId);
   if (!["member", "creator", "administrator"].includes(status)) {
@@ -144,7 +148,10 @@ bot.on("contact", async (msg) => {
     if (phone.startsWith("998")) {
       phone = `+${phone}`;
     } else {
-      console.log("Invalid phone number, does not start with +998 or 998:", phone);
+      console.log(
+        "Invalid phone number, does not start with +998 or 998:",
+        phone
+      );
       return bot.sendMessage(
         chatId,
         "❌ Faqat +998 bilan boshlanuvchi O‘zbekiston raqamlari qabul qilinadi."
@@ -307,7 +314,9 @@ bot.on("message", async (msg) => {
       const formatted = users
         .map(
           (u) =>
-            `👤 ${u.firstName} | @${u.username || "-"} | ID: ${u.telegramId} | ⭐ ${u.starsEarned}`
+            `👤 ${u.firstName} | @${u.username || "-"} | ID: ${
+              u.telegramId
+            } | ⭐ ${u.starsEarned}`
         )
         .join("\n");
       return bot.sendMessage(
@@ -406,11 +415,11 @@ bot.on("message", async (msg) => {
       return bot.sendMessage(
         chatId,
         `📋 Joriy narxlar:\n\n` +
-        `Premium 3 oy: ${prices["3 oy"]} so'm\n` +
-        `Premium 6 oy: ${prices["6 oy"]} so'm\n` +
-        `Premium 1 yil: ${prices["1 yil"]} so'm\n` +
-        `1 ta yulduz: ${prices.star_per_unit} so'm\n\n` +
-        `O‘zgartirmoqchi bo‘lgan narx turini tanlang:`,
+          `Premium 3 oy: ${prices["3 oy"]} so'm\n` +
+          `Premium 6 oy: ${prices["6 oy"]} so'm\n` +
+          `Premium 1 yil: ${prices["1 yil"]} so'm\n` +
+          `1 ta yulduz: ${prices.star_per_unit} so'm\n\n` +
+          `O‘zgartirmoqchi bo‘lgan narx turini tanlang:`,
         {
           reply_markup: {
             keyboard: [
@@ -566,7 +575,9 @@ bot.on("message", async (msg) => {
 
     await bot.sendMessage(
       ADMIN_CHAT_ID,
-      `💎 STARS BUYURTMA\n\n👤 Kimdan: @${msg.from.username || "nomalum"}\n⭐ Miqdor: ${starAmount} ta\n💵 Narxi: ${price} so'm\n👥 Kimga: ${recipient}`
+      `💎 STARS BUYURTMA\n\n👤 Kimdan: @${
+        msg.from.username || "nomalum"
+      }\n⭐ Miqdor: ${starAmount} ta\n💵 Narxi: ${price} so'm\n👥 Kimga: ${recipient}`
     );
 
     return bot.sendMessage(
@@ -599,9 +610,9 @@ bot.on("message", async (msg) => {
     return bot.sendMessage(
       chatId,
       `⚠️ <b>PREMIUM NARXLARI 🧙</b>\n\n` +
-      `🎁3 oylik - ${prices["3 oy"]} so’m\n` +
-      `🎁6 oylik - ${prices["6 oy"]} so’m\n` +
-      `🎁12 oylik - ${prices["1 yil"]} so’m`,
+        `🎁3 oylik - ${prices["3 oy"]} so’m\n` +
+        `🎁6 oylik - ${prices["6 oy"]} so’m\n` +
+        `🎁12 oylik - ${prices["1 yil"]} so’m`,
       {
         parse_mode: "HTML",
         reply_markup: {
@@ -615,7 +626,10 @@ bot.on("message", async (msg) => {
     );
   }
 
-  if (userStates[chatId]?.step === "choosing_package" && text.startsWith("📦")) {
+  if (
+    userStates[chatId]?.step === "choosing_package" &&
+    text.startsWith("📦")
+  ) {
     const chosen = text.replace("📦 ", "").trim();
     const prices = await getPrices();
 
@@ -654,7 +668,9 @@ bot.on("message", async (msg) => {
 
     await bot.sendMessage(
       ADMIN_CHAT_ID,
-      `🚕 PREMIUM BUYURTMA\n\n👤 Kimdan: @${msg.from.username || "nomalum"}\n🎓 Paket: ${selectedPackage}\n💵 Narxi: ${price} so'm\n👥 Kimga: ${recipient}`
+      `🚕 PREMIUM BUYURTMA\n\n👤 Kimdan: @${
+        msg.from.username || "nomalum"
+      }\n🎓 Paket: ${selectedPackage}\n💵 Narxi: ${price} so'm\n👥 Kimga: ${recipient}`
     );
 
     return bot.sendMessage(
@@ -704,7 +720,11 @@ bot.on("message", async (msg) => {
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.trim();
-  if (userSteps[chatId]?.step === "waiting_for_manual_phone" && text && !/^\+998\d{9}$/.test(text)) {
+  if (
+    userSteps[chatId]?.step === "waiting_for_manual_phone" &&
+    text &&
+    !/^\+998\d{9}$/.test(text)
+  ) {
     return bot.sendMessage(
       chatId,
       "❌ Noto‘g‘ri format. Iltimos, telefon raqamingizni +998 bilan boshlanadigan va 12 raqamdan iborat holda kiriting (masalan, +998901234567).",
@@ -723,27 +743,15 @@ app.use("/api/paynet", paynetRouter);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server ${PORT}-portda ishga tushdi`);
-  bot.setWebHook(`${process.env.RENDER_PUBLIC_URL}/bot${process.env.BOT_TOKEN}`);
+  bot.setWebHook(
+    `${process.env.RENDER_PUBLIC_URL}/bot${process.env.BOT_TOKEN}`
+  );
 });
 
 app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // const express = require("express");
 // const app = express();
@@ -754,16 +762,6 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => console.log(`🚀 Server ${PORT}-portda ishga tushdi`));
-
-
-
-
-
-
-
-
-
-
 
 // require('dotenv').config();
 // const TelegramBot = require('node-telegram-bot-api');
@@ -1224,12 +1222,6 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 //     }
 // });
 
-
-
-
-
-
-
 // require('dotenv').config();
 // const TelegramBot = require('node-telegram-bot-api');
 // const mongoose = require('mongoose');
@@ -1606,20 +1598,6 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 //     }
 // });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // require('dotenv').config();
 // const TelegramBot = require('node-telegram-bot-api');
 // const mongoose = require('mongoose');
@@ -1789,7 +1767,7 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 
 //         Sizning referal havolangiz:
 //         https://t.me/${process.env.BOT_USERNAME}?start=ref${chatId}
-        
+
 //         Har bir do‘st telefon raqamini yuborsa sizga 1 ⭐ beriladi. 50⭐ dan keyin almashtirish mumkin!`);
 //     }
 
@@ -1926,4 +1904,3 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 //         });
 //     }
 // });
-
