@@ -7,6 +7,7 @@ const User = require("./models/User");
 const Price = require("./models/Price");
 const Payment = require("./models/Payments");
 const Counter = require("./models/Counter");
+const cors = require("cors");
 
 connectDB();
 
@@ -874,6 +875,7 @@ bot.on("message", async (msg) => {
 // Express server setup
 const app = express();
 app.use(express.json());
+app.use(cors());
 app.use("/api", paynetRouter);
 
 const PORT = process.env.PORT || 5000;
