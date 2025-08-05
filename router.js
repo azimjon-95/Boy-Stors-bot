@@ -27,7 +27,7 @@ router.post("/paynet", async (req, res) => {
         }
 
         let order_id = params.fields.order_id;
-        const user = await Payment.findOne({ order_id });
+        const user = await Payment.findOne({ order_id, status: false });
 
         if (!user) {
           return res.json({
