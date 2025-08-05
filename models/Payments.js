@@ -25,11 +25,10 @@ const paymentSchema = new Schema(
     },
     transactionId: {
       type: String,
-      required: true,
     },
     status: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     order_id: {
       type: String,

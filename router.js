@@ -18,7 +18,7 @@ router.post("/paynet", async (req, res) => {
 
     switch (method) {
       case "GetInformation": {
-        if (!params?.fields?.username) {
+        if (!params?.fields?.order_id) {
           return res.json({
             jsonrpc: "2.0",
             id,
@@ -26,14 +26,17 @@ router.post("/paynet", async (req, res) => {
           });
         }
 
-        let username = params.fields.username.replace("@", "");
-        const user = await USER_DB.findOne({ username });
+        let order_id = params.fields.order_id;
+        const user = await Payment.findOne({ order_id });
 
         if (!user) {
           return res.json({
             jsonrpc: "2.0",
             id,
-            error: { code: 302, message: "Foydalanuvchi topilmadi" },
+            error: {
+              code: 302,
+              message: "Bu Navbat raqami uchun malumot mavjud emas",
+            },
           });
         }
 
@@ -44,16 +47,15 @@ router.post("/paynet", async (req, res) => {
             status: "0",
             timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
             fields: {
-              username: user.username,
-              firstName: user.firstName,
-              phoneNumber: user.phoneNumber,
+              amount: user.amount,
             },
           },
         });
       }
 
+      // === PERFORM TRANSACTION ===
       case "PerformTransaction": {
-        if (!params?.fields?.username) {
+        if (!params?.fields?.order_id || !params?.amount) {
           return res.json({
             jsonrpc: "2.0",
             id,
@@ -61,56 +63,64 @@ router.post("/paynet", async (req, res) => {
           });
         }
 
-        const exactUser = await USER_DB.findOne({
-          username: params.fields.username,
+        const exactUser = await Payment.findOne({
+          order_id: params.fields.order_id,
+          status: false,
         });
+
         if (!exactUser) {
           return res.json({
             jsonrpc: "2.0",
             id,
-            error: { code: 302, message: "Foydalanuvchi topilmadi" },
+            error: {
+              code: 302,
+              message:
+                "Bu Navbat raqami uchun malumot avval saqlangan yoki mavjud emas",
+            },
           });
         }
 
-        const data = {
-          user: exactUser._id,
-          amount: params.amount,
-          type: params.fields.type,
-          transactionId: params.transactionId,
-          starsCount: params.fields.starsCount,
-          months: params.fields.months,
-        };
+        // Tiyinni so‘mga aylantirish
+        const amountInUzs = params.amount / 100;
+
+        if (exactUser.amount !== amountInUzs) {
+          return res.json({
+            jsonrpc: "2.0",
+            id,
+            error: { code: 302, message: "To‘lov summasi xato" },
+          });
+        }
 
         const existing = await Payment.findOne({
-          transactionId: data.transactionId,
+          transactionId: params.transactionId,
         });
+
         if (existing) {
           return res.json({
             jsonrpc: "2.0",
             id,
-            error: { code: 201, message: "Bunday to‘lov mavjud" },
+            error: {
+              code: 201,
+              message: "Bunday Transakziya raqamiga to‘lov mavjud",
+            },
           });
         }
 
-        const payment = await Payment.create(data);
-        if (!payment) {
-          return res.json({
-            jsonrpc: "2.0",
-            id,
-            error: { code: 302, message: "To‘lov qilishda xatolik" },
-          });
-        }
+        exactUser.status = true;
+        exactUser.transactionId = params.transactionId;
+        await exactUser.save();
 
         return res.json({
           jsonrpc: "2.0",
           id,
           result: {
             timestamp: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-            providerTrnId: payment._id,
+            providerTrnId: exactUser._id,
             fields: {
-              username: params.fields.username,
+              username: exactUser.username,
               firstName: exactUser.firstName,
-              type: params.fields.type === "stars" ? "Stars" : "Premium",
+              type: exactUser.type,
+              message: "To‘lov muvaffaqiyatli amalga oshirildi",
             },
           },
         });

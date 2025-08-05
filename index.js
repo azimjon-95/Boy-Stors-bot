@@ -20,11 +20,6 @@ const userSteps = {}; // Track user interaction steps
 const userStates = {}; // Track user state
 const referralMap = {}; // Track referral links
 
-// === Transaction Id ===
-const generateTransactionId = () => {
-  return `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-};
-
 // === Generate unique order_id ===
 async function generateOrderId() {
   try {
@@ -54,7 +49,9 @@ async function generateOrderId() {
     }
 
     if (!isUnique) {
-      throw new Error("Failed to generate a unique order_id after multiple attempts");
+      throw new Error(
+        "Failed to generate a unique order_id after multiple attempts"
+      );
     }
 
     return orderId;
@@ -178,8 +175,8 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     }
 
     // Handle referral parameter
-    if (param && param.startsWith('ref')) {
-      const referrerId = param.replace('ref', '');
+    if (param && param.startsWith("ref")) {
+      const referrerId = param.replace("ref", "");
       if (referrerId && !isNaN(referrerId)) {
         referralMap[userId] = Number(referrerId);
         try {
@@ -206,7 +203,10 @@ bot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     );
   } catch (error) {
     console.error("Error in /start command:", error);
-    await bot.sendMessage(chatId, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
+    await bot.sendMessage(
+      chatId,
+      "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
+    );
   }
 });
 
@@ -241,7 +241,10 @@ bot.on("contact", async (msg) => {
                   text: "🔗 Kanalga o'tish",
                   url: `https://t.me/${REQUIRED_CHANNEL.replace("@", "")}`,
                 },
-                { text: "✅ A'zo bo'ldim", callback_data: "check_subscription" },
+                {
+                  text: "✅ A'zo bo'ldim",
+                  callback_data: "check_subscription",
+                },
               ],
             ],
           },
@@ -280,7 +283,10 @@ bot.on("contact", async (msg) => {
     await sendMainMenu(chatId);
   } catch (error) {
     console.error("Error processing contact:", error);
-    await bot.sendMessage(chatId, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
+    await bot.sendMessage(
+      chatId,
+      "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
+    );
   }
 });
 
@@ -340,10 +346,12 @@ bot.on("message", async (msg) => {
 
     // === USER COMMANDS ===
     await handleUserCommands(chatId, userId, text, msg, userStates);
-
   } catch (error) {
     console.error("Error handling message:", error);
-    await bot.sendMessage(chatId, "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
+    await bot.sendMessage(
+      chatId,
+      "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
+    );
   }
 });
 
@@ -354,7 +362,9 @@ async function handleAdminCommands(chatId, text, userStates) {
     const formatted = users
       .map(
         (u) =>
-          `👤 ${u.firstName} | @${u.username || "-"} | ID: ${u.telegramId} | ⭐ ${u.starsEarned}`
+          `👤 ${u.firstName} | @${u.username || "-"} | ID: ${
+            u.telegramId
+          } | ⭐ ${u.starsEarned}`
       )
       .join("\n");
     return bot.sendMessage(
@@ -465,11 +475,11 @@ async function handleAdminCommands(chatId, text, userStates) {
     return bot.sendMessage(
       chatId,
       `📋 Joriy narxlar:\n\n` +
-      `Premium 3 oy: ${prices["3 oy"]} so'm\n` +
-      `Premium 6 oy: ${prices["6 oy"]} so'm\n` +
-      `Premium 1 yil: ${prices["1 yil"]} so'm\n` +
-      `1 ta yulduz: ${prices.star_per_unit} so'm\n\n` +
-      `O'zgartirmoqchi bo'lgan narx turini tanlang:`,
+        `Premium 3 oy: ${prices["3 oy"]} so'm\n` +
+        `Premium 6 oy: ${prices["6 oy"]} so'm\n` +
+        `Premium 1 yil: ${prices["1 yil"]} so'm\n` +
+        `1 ta yulduz: ${prices.star_per_unit} so'm\n\n` +
+        `O'zgartirmoqchi bo'lgan narx turini tanlang:`,
       {
         reply_markup: {
           keyboard: [
@@ -566,9 +576,9 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     return bot.sendMessage(
       chatId,
       `👥 Do'stlaringizni taklif qilib yutib oling!\n\n` +
-      `💰 Sizning balansingiz: ${starsCount} ⭐\n\n` +
-      `Sizning referal havolangiz:\nhttps://t.me/${BOT_USERNAME}?start=ref${userId}\n\n` +
-      `Har bir do'st telefon raqamini yuborsa sizga 1 ⭐ beriladi. 50⭐ dan keyin almashtirish mumkin!`,
+        `💰 Sizning balansingiz: ${starsCount} ⭐\n\n` +
+        `Sizning referal havolangiz:\nhttps://t.me/${BOT_USERNAME}?start=ref${userId}\n\n` +
+        `Har bir do'st telefon raqamini yuborsa sizga 1 ⭐ beriladi. 50⭐ dan keyin almashtirish mumkin!`,
       {
         reply_markup: { keyboard: [["🔙 Ortga"]], resize_keyboard: true },
       }
@@ -599,7 +609,8 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
       );
     }
 
-    const starPrice = (await Price.findOne({ type: "star_per_unit" }))?.value || 240;
+    const starPrice =
+      (await Price.findOne({ type: "star_per_unit" }))?.value || 240;
     const price = count * starPrice;
     userStates[chatId] = {
       step: "waiting_for_star_recipient",
@@ -618,7 +629,6 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     );
   }
 
-
   if (userStates[chatId]?.step === "waiting_for_star_recipient") {
     let recipient = text.trim();
     if (recipient === "🙋‍♂️ O'zimga") {
@@ -636,13 +646,13 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     // Save to Payment collection
     try {
       const payment = await Payment.create({
-        user: user._id,
+        user: user?._id,
         amount: price,
         type: "star_purchase",
         starsCount: starAmount,
         months: null,
-        transactionId: generateTransactionId(),
-        status: true, // Pending confirmation
+        transactionId: null,
+        status: false, // Pending confirmation
         order_id: orderId,
       });
 
@@ -657,11 +667,11 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
       await bot.sendMessage(
         ADMIN_CHAT_ID,
         `💎 STARS BUYURTMA\n\n` +
-        `👤 Kimdan: @${msg.from.username || "nomalum"}\n` +
-        `⭐ Miqdor: ${starAmount} ta\n` +
-        `💵 Narxi: ${price} so'm\n` +
-        `👥 Kimga: ${recipient}\n` +
-        `🆔 Buyurtma: ${orderId}`
+          `👤 Kimdan: @${msg.from.username || "nomalum"}\n` +
+          `⭐ Miqdor: ${starAmount} ta\n` +
+          `💵 Narxi: ${price} so'm\n` +
+          `👥 Kimga: ${recipient}\n` +
+          `🆔 Buyurtma: ${orderId}`
       );
     } catch (error) {
       console.error("Error sending order to admin:", error);
@@ -697,9 +707,9 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     return bot.sendMessage(
       chatId,
       `⚠️ <b>PREMIUM NARXLARI 🧙</b>\n\n` +
-      `🎁3 oylik - ${prices["3 oy"]} so'm\n` +
-      `🎁6 oylik - ${prices["6 oy"]} so'm\n` +
-      `🎁12 oylik - ${prices["1 yil"]} so'm`,
+        `🎁3 oylik - ${prices["3 oy"]} so'm\n` +
+        `🎁6 oylik - ${prices["6 oy"]} so'm\n` +
+        `🎁12 oylik - ${prices["1 yil"]} so'm`,
       {
         parse_mode: "HTML",
         reply_markup: {
@@ -713,7 +723,10 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
     );
   }
 
-  if (userStates[chatId]?.step === "choosing_package" && text.startsWith("📦")) {
+  if (
+    userStates[chatId]?.step === "choosing_package" &&
+    text.startsWith("📦")
+  ) {
     const chosen = text.replace("📦 ", "").trim();
     const prices = await getPrices();
 
@@ -770,8 +783,8 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
         type: "premium_purchase",
         starsCount: null,
         months: months,
-        transactionId: generateTransactionId(),
-        status: true, // Pending confirmation
+        transactionId: null,
+        status: false, // Pending confirmation
         order_id: orderId,
       });
 
@@ -786,11 +799,11 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
       await bot.sendMessage(
         ADMIN_CHAT_ID,
         `🚕 PREMIUM BUYURTMA\n\n` +
-        `👤 Kimdan: @${msg.from.username || "nomalum"}\n` +
-        `🎓 Paket: ${selectedPackage}\n` +
-        `💵 Narxi: ${price} so'm\n` +
-        `👥 Kimga: ${recipient}\n` +
-        `🆔 Buyurtma: ${orderId}`
+          `👤 Kimdan: @${msg.from.username || "nomalum"}\n` +
+          `🎓 Paket: ${selectedPackage}\n` +
+          `💵 Narxi: ${price} so'm\n` +
+          `👥 Kimga: ${recipient}\n` +
+          `🆔 Buyurtma: ${orderId}`
       );
     } catch (error) {
       console.error("Error sending order to admin:", error);
@@ -837,7 +850,7 @@ async function handleUserCommands(chatId, userId, text, msg, userStates) {
       }
     );
   }
-};
+}
 
 // Invalid phone number format handler
 bot.on("message", async (msg) => {
@@ -861,7 +874,7 @@ bot.on("message", async (msg) => {
 // Express server setup
 const app = express();
 app.use(express.json());
-app.use("/api/paynet", paynetRouter);
+app.use("/api", paynetRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
@@ -875,7 +888,3 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
-
-
-
-
